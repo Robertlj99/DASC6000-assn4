@@ -1,0 +1,160 @@
+---
+title: "DASC 600 Assignment 04: Common Discrete Probability Distributions"
+author: "Robert Johnson"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+number-sections: true
+number-depth: 3
+format:
+  html:
+    toc: true
+    toc-location: right
+    number-sections: true
+    number-depth: 3
+    html-math-method: katex
+    embed-resources: true
+    self-contained: true
+# bibliography: dasc-6000.bib 
+# csl: ieee-with-url.csl
+# linkcolor: red
+# urlcolor: blue
+# link-citations: yes
+# header-includes:
+#   - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+# Assignment goal
+
+The overarching goal for this assignment is to assess your understanding of discrete probability distributions - Bernoulli, Binomial, Geometric, Negative Binomial, Poisson, Hypergeometric, Benford, Zipf, and mixtures.
+
+# Instructions
+
+Please show all your work. Simply providing the final answer is treated as no response. If you do not use R or Python notebooks, it is okay. Please preserve the document structure if you choose to use Microsoft Word or something else. Please number your responses to match with the corresponding questions.
+
+**Please submit your response as a self-contained HTML or PDF document**. 
+
+# Binomial Random Variable
+
+
+1. A binomial random variable $X$ has population mean 3 and population variance $2.$ Compute $\mathbf{P}(X \leq 2)$. Also, verify your answer by computing $\mathbf{P}(X \leq 2)$ using R.
+
+    
+Mean tells us $np = 3$ and the variance gives us $np(1-p) = 2$
+- Step 1: Substitute np and solve for p in variance
+$$3(1-p) = 2 \rightarrow 3 - 3p = 2 \rightarrow 3p = 1 \rightarrow p = \frac{1}{3}$$
+-Step 2: Substitute for p and solve for n in mean
+$$n \cdot \frac{1}{3} = 3 \rightarrow n = 9$$
+-Step 3: Compute probability for $X \leq 2$
+```{r}
+n <- 9 #n computed above
+p <- 1/3 #p computed above
+px <- pbinom(2, size=n, prob=p) #compute probability for 0-2
+print(paste("P(X<=2) =", px))
+```
+
+
+# PowerBall Lottery
+
+One version of the PowerBall lottery requires matching the numbers on five white balls, in any order, selected at random and without replacement from a drum containing 69 white balls numbered $1,2, \ldots, 69$, and matching an additional red "powerball" number selected at random from a second drum containing 26 red balls numbered $1,2, \ldots, 26.$
+
+(a) What is the probability that one person who selects six numbers wins the PowerBall lottery?
+
+The probability is equal to $\frac{1}{\text{Red Combinations} \cdot \text{White combinations}}$ or $\frac{1}{\binom{69}{5} \cdot \binom{26}{1}}$
+```{r}
+white_combos <- choose(69,5)
+red_combos <- choose(26,1) #This clearly equals 26 but I include it for posterity
+p <- 1 / (white_combos * red_combos)
+print(paste("Probability of one person winning =", p))
+```
+
+(b) If one thousand people purchase PowerBall lottery tickets simultaneously and each person makes a random selection for the six numbers, independent of any of the other gamblers, find the probability mass function of the number of winners.
+
+The pmf for this problem is given as $P(X=k)=\binom{n}{k} p^k (1-p)^{n-k}$
+
+# Geometric Random Variable
+    
+Let $X$ denote the number of tails prior to the first occurrence of a head in repeated tosses of a fair coin. Find $P(X \bmod 5=2)$. 
+
+The pmf for our problem is
+$$P(X = k) = (\frac{1}{2})^k \cdot \frac{1}{2} = \frac{1}{2^{k+1}}, \text{for} \ k = 0,1,2,\ldots$$
+We want the sum of the values that satisfy $X\ \text{mod} \ 5 = 2$
+$$P(X \ \text{mod} \ 5 = 2) = \sum_{n=0}^{\infty} \frac{1}{2^{5n+3}}$$
+Computing the seires takes a lot of steps but the final answer gotten is $\frac{4}{31}$
+
+# Negative Binomial Random Variable
+
+Let the random variable $X$ denote the number of independent rolls of a fair die required to obtain the second occurrence of a "five." Find $P(X \geq 4)$. 
+
+```{r}
+p <- 1/6 #p is for probability wherever you see it in here
+successes <- 2
+px2 <- choose(1,1) * (p^successes) * ((1-p)^(2-successes)) #P(X = 2)
+px3 <- choose(2,1) * (p^successes) * ((1-p)^(3-successes)) #P(X = 3)
+px4 <- px2 + px3 #P(X = 4)
+pxg <- 1 - px4 #P(X >= 4)
+print(pxg)
+```
+
+
+# Poisson Random Variable
+
+An automobile manufacturer is implementing a "zero-defects" drive in order to improve the quality of their automobiles. They have found that the number of manufacturing defects on each car follows a Poisson distribution. If their goal is to have at least 98 percent of their cars defect-free, find the largest population mean $\mu$ that achieves their goal. 
+
+Since we want zero defects our Poisson probability formula will have $k = 0$, and the goal is 98 percent of cars so we want $P(X=0) \geq 0.98$, thus it will take the form
+$$P(X = 0) = \frac{\mu ^0 e^{-\mu}}{0!} = e^{-\mu} \geq 0.98$$
+
+All that is left is to solve for $\mu$
+```{r}
+mu <- -log(0.98)
+print(paste("Mu =", mu))
+```
+
+# Another Poisson Random Variable
+
+The number of parking tickets issued daily is a Poisson random variable with population mean $15.$ Write the mathematical expression and use $R$ to find the probability that:
+
+(a) exactly 17 tickets will be issued in one day,
+
+$$P(X=17) = \frac{\lambda^{17}e^{-\lambda}}{17!} = \frac{15^{17}e^{-15}}{17!}$$
+```{r}
+lambda <- 15
+p <- dpois(17, lambda)
+print(paste("P(X = 17) =", p))
+```
+
+(b) 17 or more tickets will be issued in one day,
+
+$$P(X \geq 17) = 1 - P(X \leq 16) = 1 - \sum_{k=0}^{16}\frac{\lambda^ke^{-\lambda}}{k!} = 1 - \sum_{k=0}^{16}\frac{15^k e^{-15}}{k!}$$
+```{r}
+p <- ppois(16, lambda, lower.tail=FALSE)
+print(paste("P(X >= 17)", p))
+```
+
+(c) exactly 17 tickets will be issued in one day given that the population mean number of tickets was exceeded on that particular day, and
+
+$P(X = 17)$ was defined in part (a)
+$$P(X > 15) = 1 - P(X \leq 15) = 1 - \sum_{k=0}^{15}\frac{15^k e^{-15}}{k!}$$
+$$P(X = 17 | X > 15) = \frac{P(X = 17 \cap X>15)}{P(X > 15)} =\frac{P(X = 17)}{P(X > 15)}$$
+```{r}
+px <- ppois(15, lambda, lower.tail=FALSE)
+p <- dpois(17, lambda) / px
+print(paste("P(X = 17 | x > 15) =", p))
+```
+
+(d) 100 or fewer tickets will be issued in any five-day period.
+
+Let $\lambda_{Y}$ represent the average amount of tickets over 5 days then $\lambda_{Y} = 15 \cdot 5 = 75$
+$$P(Y \leq 100) = \sum_{k=0}^{100} \frac{\lambda^k_Y e^{-\lambda_Y}}{k!} = \sum_{k=0}^{100} \frac{75^k e^{-75}}{k!}$$
+```{r}
+lambdaY <- 5 * lambda
+p <- ppois(100, lambdaY)
+print(paste("P(Y <= 100) =", p))
+```
+
+Assume that $Y$ be the random variable that represents the number of tickets issued in any five-day period.
+    
+Your answer goes here.
